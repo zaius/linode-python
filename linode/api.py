@@ -34,8 +34,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from decimal import Decimal
 import logging
-import urllib
-import urllib2
 
 try:
   import json
@@ -44,49 +42,22 @@ except:
   import simplejson as json
   FULL_BODIED_JSON = False
 
-try:
-  import requests
-  from types import MethodType
+import requests
+from types import MethodType
 
-  def requests_request(url, fields, headers):
-    return requests.Request(method="POST", url=url, headers=headers, data=fields)
+def requests_request(url, fields, headers):
+  return requests.Request(method="POST", url=url, headers=headers, data=fields)
 
-  def requests_open(request):
-    r = request.prepare()
-    s = requests.Session()
-    s.verify = True
-    response = s.send(r)
-    response.read = MethodType(lambda x: x.text, response)
-    return response
+def requests_open(request):
+  r = request.prepare()
+  s = requests.Session()
+  s.verify = True
+  response = s.send(r)
+  response.read = MethodType(lambda x: x.text, response)
+  return response
 
-  URLOPEN = requests_open
-  URLREQUEST = requests_request
-except:
-  try:
-    import VEpycurl
-    def vepycurl_request(url, fields, headers):
-      return (url, fields, headers)
-
-    def vepycurl_open(request):
-      c = VEpycurl.VEpycurl(verifySSL=2)
-      url, fields, headers = request
-      nh = [ '%s: %s' % (k, v) for k,v in headers.items()]
-      c.perform(url, fields, nh)
-      return c.results()
-
-    URLOPEN = vepycurl_open
-    URLREQUEST = vepycurl_request
-  except:
-    import warnings
-    ssl_message = 'using urllib instead of pycurl, urllib does not verify SSL remote certificates, there is a risk of compromised communication'
-    warnings.warn(ssl_message, RuntimeWarning)
-
-    def urllib_request(url, fields, headers):
-      fields = urllib.urlencode(fields)
-      return urllib2.Request(url, fields, headers)
-
-    URLOPEN = urllib2.urlopen
-    URLREQUEST = urllib_request
+URLOPEN = requests_open
+URLREQUEST = requests_request
 
 
 class MissingRequiredArgument(Exception):
@@ -254,7 +225,6 @@ class Api:
     request['api_responseFormat'] = 'json'
 
     logging.debug('Parmaters '+str(request))
-    #request = urllib.urlencode(request)
 
     headers = {
       'User-Agent': 'LinodePython/'+VERSION,
